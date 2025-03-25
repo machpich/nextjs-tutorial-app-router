@@ -26,10 +26,14 @@ export async function createInvoice(formData: FormData) {
     const amountInCents = amount * 100;
     const date = new Date().toISOString().split('T')[0];
 
-    await sql`
-        INSERT INTO invoices (customer_id, amount, status, date)
-        VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-    `;
+    try {
+        await sql`
+            INSERT INTO invoices (customer_id, amount, status, date)
+            VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+        `;
+    } catch (error) {
+        console.log('データベースへの挿入に失敗しました', error);
+    }
 
     revalidatePath('/dashboard/invoices');
     redirect('/dashboard/invoices');
@@ -45,15 +49,19 @@ export async function updateInvoice(id: string, formData: FormData) {
         status: formData.get('status'),
     });
 
-    // 金額をセントに変換 
+    // 金額をセントに変換
     const amountInCents = amount * 100;
 
     // データベースの更新
-    await sql`
-      UPDATE invoices
-      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
-      WHERE id = ${id}
-    `;
+    try {
+        await sql`
+            UPDATE invoices
+            SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+            WHERE id = ${id}
+        `;
+    } catch (error) {
+        console.log('データベースの更新に失敗しました', error);
+    }
 
     // キャッシュの再検証
     revalidatePath('/dashboard/invoices');
